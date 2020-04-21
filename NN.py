@@ -85,7 +85,7 @@ class TextCNN(nn.Module):
 
 #输入: 第i句诗(7*vocab_size)输出: vi(1*embedding dim)
 class CSM(nn.Module):
-    def __init__(self, vocab_size = len(TEXT.vocab), pad_idx = TEXT.vocab.stoi[TEXT.pad_token], embedding_dim=300, text_len=7, output_dim=9, feature_size=100):
+    def __init__(self, vocab_size = len(TEXT.vocab), pad_idx = TEXT.vocab.stoi[TEXT.pad_token], embedding_dim=300, text_len=7, feature_size=200):
         super().__init__() #调用nn.Module的构造函数进行初始化
         self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=pad_idx) #使用embedding table构建语句到向量的映射
         self.embedding.weight.data.copy_(weight_matrix) #载入由预训练词向量生成的权重矩阵
@@ -113,12 +113,65 @@ class CSM(nn.Module):
         out = self.relu(out) #batch_size*feature_size*1
         out = out.squeeze()
         return out #batch_size*feature_size
-    
-class RCM(nn.Module):
-    def __init__(self):
-        super().init()
-        self.fc = nn.Linear(in_features = , out_features = )
 
+#输入: vec_i 输出: 
+class RCMUnit(nn.Module):
+    def __init__(self, feature_size=200):
+        super().__init__()
+        self.relu=nn.ReLU() #ReLU函数
+        self.U = nn.Linear(in_features = feature_size, out_features = feature_size)
+    def forward(self, vec): #前向传播
+        out = self.U(torch.transpose(vec,0,1))
+        out = self.relu(out)
+        return out
+        
+class RCM(nn.Module):
+    def __init__(self, feature_size=200, num_of_unit=7):
+        super().__init__()
+        self.relu = nn.ReLU() #ReLU函数
+        self.M = nn.Linear(in_features = 2*feature_size, out_features = feature_size)
+        self.h0 = torch.zeros((feature_size,1))
+        self.U = []
+        self.num_of_unit = num_of_unit
+        for i in range(0,num_of_unit-1):
+            self.U.append(RCMUnit())
+    def forward(self, vecs, ith_sentence): #前向传播
+        print(vecs.size())
+        ans = []
+        h = self.h0
+        for i in range(0,ith_sentence-1):
+            out = torch.cat((vecs[i],h) ,dim=0)
+            out = self.M(out)
+            h = self.relu(out)
+        for j in range(0, self.num_of_unit-1):
+            out = self.U[j](h)
+            ans.append(out)
+        return ans
+
+class RCM(nn.Module):
+    def __init__(self, feature_size=200, num_of_unit=7):
+        super().__init__()
+        self.relu = nn.ReLU() #ReLU函数
+        self.M = nn.Linear(in_features = 2*feature_size, out_features = feature_size)
+        self.h0 = torch.zeros((feature_size,1))
+        self.U = []
+        self.num_of_unit = num_of_unit
+        for i in range(0,num_of_unit-1):
+            self.U.append(RCMUnit())
+    def forward(self, vecs, ith_sentence): #前向传播
+        print(vecs.size())
+        ans = []
+        h = self.h0
+        for i in range(0,ith_sentence-1):
+            out = torch.cat((vecs[i],h) ,dim=0)
+            out = self.M(out)
+            h = self.relu(out)
+        for j in range(0, self.num_of_unit-1):
+            out = self.U[j](h)
+            ans.append(out)
+        return ans
+    
+'''
 def put(str):
     s = tokenize(str)
     l=[]
@@ -126,19 +179,21 @@ def put(str):
     for w in s:
         l.append([TEXT.vocab.stoi[w]])
     lt = torch.tensor(l)
-    model(lt.cuda())
-        
-model = CSM() #定义TextCNN模型
-loss_function = nn.functional.cross_entropy #使用交叉熵损失函数
-optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.001) #使用Adam作为优化器
-model.cuda() #将模型移至gpu
-put("也 无 风 雨 也 无 晴")
-put("不要 搞个 大 新闻 呃 谔 鄂")
+    return model(lt.cuda())
 '''
+model1 = CSM() #定义TextCNN模型
+model2 = RCM()
+loss_function = nn.functional.cross_entropy #使用交叉熵损失函数
+optimizer = optim.Adam(filter(lambda p: p.requires_grad, model1.parameters()), lr=0.001) #使用Adam作为优化器
+model1.cuda() #将模型移至gpu
+model2.cuda()
+#put("也 无 风 雨 也 无 晴")
+#put("不要 搞个 大 新闻 呃 谔")
 i=1
 for batch in train_iter:
-    predicted = model(batch.text.cuda())
+    predicted = model1(batch.text.cuda())
+    predicted = model2(predicted,1)
+    print(predicted[1].size())
     i+=1
     if i>=2:
         break
-'''
