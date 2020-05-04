@@ -12,7 +12,7 @@ torch.manual_seed(19260817)  # 设定随机数种子
 torch.backends.cudnn.deterministic = True  # 保证可复现性
 
 batch_size = 64
-text_len = 7
+text_len = 5
 feature_size = 200
 embedding_dim = 150
 valid_iter = getValidIter(text_len, batch_size)
@@ -23,6 +23,18 @@ model = Model(vocab_size=len(TEXT.vocab),weight_matrix=weight_matrix, pad_idx=TE
 optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.001)
 model.cuda()
 
+#用于检验模型合理性
+valist1 = ['白', '日', '不', '到', '处', '青', '春', '恰', '自', '来', '苔', '花', '如', '米', '小', '亦', '学', '牡', '丹', '开']
+valist2 = ['人', '间', '七', '月', '炎', '云', '升', '碧', '树', '黄', '鹂', '亦', '可', '人', '哑', '咤', '一', '声', '行', '道', '外', '不', '知','身', '在', '故', '园', '春']
+vac1 = []
+vac2 = []
+for w in valist1:
+    vac1.append(TEXT.vocab.stoi[w])
+for w in valist2:
+    vac2.append(TEXT.vocab.stoi[w])
+vac1 = torch.tensor(vac1, dtype=torch.long).unsqueeze(1)
+vac2 = torch.tensor(vac2, dtype=torch.long).unsqueeze(1)
+
 def fit(epoch):
     model.train()
     start = time.time() #记录训练开始时间
@@ -30,17 +42,26 @@ def fit(epoch):
     for i in tqdm(range(1, epoch+1)):
         for idx, batch in enumerate(train_iter):
             state = torch.zeros((batch.text.size()[1], feature_size), requires_grad=True).cuda()
-            for j in range(1,4): #生成2-4句
+            for j in range(2,5): #生成2-4句
                 for k in range(1,text_len+1):
                     model.zero_grad()  # 将上次计算得到的梯度值清零
                     #if k == 1:
                     #    state = torch.zeros((1, feature_size), requires_grad=True).cuda()
-                    out, state = model(batch.text.cuda(), state, j+1, k)
-                    loss = loss_function(out, batch.text[k].cuda())
+                    out, state = model(batch.text.cuda(), state, j, k)
+                    loss = loss_function(out, batch.text[text_len*(j-1)+k-1].cuda())
                     loss.backward(retain_graph=True)  # 反向传播
                     optimizer.step()  # 修正模型
             if idx%10==0:
                 print(loss.item()) #打印损失
+                state = torch.zeros((1, feature_size), requires_grad=True).cuda()
+                for j in range(2,5): #生成2-4句
+                    for k in range(1,text_len+1):
+                        if text_len == 5:
+                            out, state = model(vac1.cuda(), state, j, k)
+                        if text_len == 7:
+                            out, state = model(vac2.cuda(), state, j, k)
+                        print(TEXT.vocab.itos[torch.argmax(out)], end=' ')
+                    print('\n')
                 losses.append(losses)
                 '''
                 print("validation")
@@ -63,5 +84,5 @@ def fit(epoch):
 
 torch.cuda.empty_cache()
 #model.load_state_dict(torch.load('models/model.pth'))
-fit(10)
+fit(200)
 #torch.save(model.state_dict(), 'models/model.pth')

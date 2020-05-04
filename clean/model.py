@@ -174,16 +174,17 @@ class Model(nn.Module):
         vecs = []
         for j in range(1,ith_sentence): #生成v1-v_ith_sentence-1
             out = self.conv1(embedded[:,:,(j-1)*self.text_len:j*self.text_len])
-            out = self.bn(out)
+            #out = self.bn(out)
             out = self.relu(out)  # batch_size*feature_size*6
             out = self.conv2(out)
-            out = self.bn(out)
+            #out = self.bn(out)
             out = self.relu(out)  # batch_size*feature_size*5
             out = self.conv3(out)
-            out = self.bn(out)
+            #out = self.bn(out)
             out = self.relu(out)  # batch_size*feature_size*3
             if self.text_len == 7:
                 out = self.conv4(out)
+                #out = self.bn(out)
                 out = self.relu(out)  # batch_size*feature_size*1
             vecs.append(out.squeeze(2))
         #---------------------------------------------------------------------#
