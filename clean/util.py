@@ -64,3 +64,6 @@ def itos(idx):
     for a, i in enumerate(idx):
         result[a] = int(TEXT.vocab.itos[i])
     return result
+
+def calSame(out, real):
+    return int(torch.argmax(out,dim=1).eq(real).sum())
