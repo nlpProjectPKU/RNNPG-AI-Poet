@@ -5,12 +5,17 @@ from torchtext.vocab import Vectors  # 用于载入预训练词向量
 from torchtext.data import BucketIterator  # 用于生成训练和测试所用的迭代器
 import os.path as path
 import codecs
+from gensim.models import Word2Vec, KeyedVectors
+from sklearn.cluster import KMeans
+import codecs
 
 def tokenize(x): return x.split()
 
 wordvecPath = "word2vec.vector"
 dataPath = "dataset/"
 TEXT = data.Field(sequential=True, tokenize=tokenize)
+wordVec = KeyedVectors.load_word2vec_format(wordvecPath, binary = False)
+vocab = wordVec.vocab
 
 class Dataset(data.Dataset):
     name = 'Dataset'
@@ -44,7 +49,7 @@ def getValidIter(fiveOrSeven, batch_size):
     return getDataIter(validfin, fiveOrSeven, batch_size)
 
 def idx_to_onehot(w, vocab_size, batch_size):
-    res = torch.zeros((batch_size, vocab_size)).cuda().scatter(1, w, 1)
+    res = torch.zeros((batch_size, vocab_size)).scatter(1, w, 1)
     return torch.transpose(res,0,1)
 
 def char_to_onehot(c, vocab_size):
@@ -79,3 +84,47 @@ def clip_gradient(optimizer, grad_clip):
         for param in group["params"]:
             if param.grad is not None:
                 param.grad.data.clamp_(-grad_clip, grad_clip)
+                
+""" params: n if number of clusters, path is the path of train file
+    return: res -> {character:(label, probability)}
+    using KMeans cluster
+"""
+def cluster(n, path):
+    trainfin = codecs.open(path, 'r', encoding = 'utf-8')
+    wordscnt = {}
+    for line in trainfin:
+        for c in line.split():
+            wordscnt[c] = wordscnt.get(c, 0) + 1
+    words = []
+    buffer = []
+    for c in wordscnt.keys():
+        if c in vocab:
+            words.append(c)
+        else:
+            buffer.append(c)
+    vectors = [wordVec[c] for c in words]
+    clt = KMeans(n-1)
+    clt.fit(vectors)
+    freq = [0]*n
+    for i in range(len(words)):
+        freq[clt.labels_[i]] += wordscnt[words[i]]
+    for c in buffer:
+        freq[n-1] += wordscnt[c]
+    res = {}
+    for i in range(len(words)):
+        c = words[i]
+        label = clt.labels_[i]
+        prob = wordscnt[c] / freq[label]
+        res[c] = tuple((label, prob))
+    for c in buffer:
+        prob = wordscnt[c] / freq[label]
+        res[c] = tuple((n-1, prob))
+    return res
+
+'''
+    for i in range(100):
+        c = words[i]
+        label = res[c]
+        print("{} : {}".format(c, label))
+'''
+    
