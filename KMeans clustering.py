@@ -20,24 +20,37 @@ def cluster(n, path):
     for line in trainfin:
         for c in line.split():
             wordscnt[c] = wordscnt.get(c, 0) + 1
-    words = [c for c in wordscnt.keys() if c in vocab]
+    words = []
+    buffer = []
+    for c in wordscnt.keys():
+        if c in vocab:
+            words.append(c)
+        else:
+            buffer.append(c)
     vectors = [wordVec[c] for c in words]
-    clt = KMeans(n)
+    clt = KMeans(n-1)
     clt.fit(vectors)
 
     freq = [0]*n
     for i in range(len(words)):
         freq[clt.labels_[i]] += wordscnt[words[i]]
+    for c in buffer:
+        freq[n-1] += wordscnt[c]
     res = {}
     for i in range(len(words)):
         c = words[i]
         label = clt.labels_[i]
         prob = wordscnt[c] / freq[label]
         res[c] = tuple((label, prob))
+    for c in buffer:
+        prob = wordscnt[c] / freq[label]
+        res[c] = tuple((n-1, prob))f
+"""
     for i in range(100):
         c = words[i]
         label = res[c]
         print("{} : {}".format(c, label))
+"""
     return res
 
 
