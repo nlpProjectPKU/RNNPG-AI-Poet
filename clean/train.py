@@ -6,13 +6,13 @@ import torch.nn as nn  # 用于搭建模型
 import torch.optim as optim  # 用于生成优化函数
 from matplotlib import pyplot as plt #用于绘制误差函数
 from model import Model
-from util import TEXT, getTrainIter, getValidIter, calSame
+from util import TEXT, getTrainIter, getValidIter, calSame, clip_gradient
 
 torch.manual_seed(19260817)  # 设定随机数种子
-torch.backends.cudnn.deterministic = True  # 保证可复现性
+torch.backends.cudnn.benchmark = True  # 保证可复现性
 
-batch_size = 64
-text_len = 5
+batch_size = 256
+text_len = 7
 feature_size = 200
 embedding_dim = 150
 valid_iter = getValidIter(text_len, batch_size)
@@ -41,16 +41,19 @@ def fit(epoch):
     losses = []
     for i in tqdm(range(1, epoch+1)):
         for idx, batch in enumerate(train_iter):
+            torch.cuda.empty_cache()
             state = torch.zeros((batch.text.size()[1], feature_size), requires_grad=True).cuda()
+            loss = 0
             for j in range(2,5): #生成2-4句
-                for k in range(1,text_len+1):
-                    model.zero_grad()  # 将上次计算得到的梯度值清零
+                for k in range(1,text_len+1):    
                     #if k == 1:
                     #    state = torch.zeros((1, feature_size), requires_grad=True).cuda()
                     out, state = model(batch.text.cuda(), state, j, k)
-                    loss = loss_function(out, batch.text[text_len*(j-1)+k-1].cuda())
-                    loss.backward(retain_graph=True)  # 反向传播
-                    optimizer.step()  # 修正模型
+                    loss += loss_function(out, batch.text[text_len*(j-1)+k-1].cuda())
+            model.zero_grad()  # 将上次计算得到的梯度值清零
+            loss.backward()  # 反向传播
+            #clip_gradient(optimizer, 0.1)
+            optimizer.step()  # 修正模型
             if idx%10==0:
                 print(loss.item()) #打印损失
                 state = torch.zeros((1, feature_size), requires_grad=True).cuda()
@@ -62,7 +65,7 @@ def fit(epoch):
                             out, state = model(vac2.cuda(), state, j, k)
                         print(TEXT.vocab.itos[torch.argmax(out)], end=' ')
                     print('\n')
-                losses.append(losses)
+                losses.append(loss.item())
                 '''
                 print("validation")
                 correct = 0 #预测正确的字数
@@ -83,6 +86,7 @@ def fit(epoch):
     plt.plot(losses) #绘制训练过程中loss与训练次数的图像'''
 
 torch.cuda.empty_cache()
-#model.load_state_dict(torch.load('models/model.pth'))
-fit(200)
-#torch.save(model.state_dict(), 'models/model.pth')
+model.load_state_dict(torch.load('models/model.pth'))
+for i in range(60):
+    fit(1)
+    torch.save(model.state_dict(), 'models/model'+str(i)+'.pth')
