@@ -37,7 +37,7 @@ max_window_size = 3
 k = 5 # number of negative sampling
 lr = 0.001 # learning rate
 num_epoch = 25
-embed_size = 150
+embed_size = 256
 print("cut finished")
 sentence=word2vec.LineSentence('cut.txt')
 model =word2vec.Word2Vec(hs=1,min_count=1,window=max_window_size,

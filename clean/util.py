@@ -4,19 +4,20 @@ from torchtext import data  # 用于生成数据集
 from torchtext.vocab import Vectors  # 用于载入预训练词向量
 from torchtext.data import BucketIterator  # 用于生成训练和测试所用的迭代器
 import os.path as path
-import codecs
+import codecs 
 from gensim.models import Word2Vec, KeyedVectors
-from sklearn.cluster import KMeans
-import codecs
+from sklearn.cluster import KMeans # 聚类函数
 
 def tokenize(x): return x.split()
 
+#在这里修改加载文件的位置
 wordvecPath = "word2vec.vector"
 dataPath = "dataset/"
 TEXT = data.Field(sequential=True, tokenize=tokenize)
 wordVec = KeyedVectors.load_word2vec_format(wordvecPath, binary = False)
 vocab = wordVec.vocab
 
+# 加载数据集所用类与函数
 class Dataset(data.Dataset):
     name = 'Dataset'
     def __init__(self, fin, text_field):
@@ -25,12 +26,12 @@ class Dataset(data.Dataset):
         print('read data from {}'.format(path))
         for line in fin:
             examples.append(data.Example.fromlist([line], fields))
-        super(Dataset, self).__init__(examples, fields) #生成标准dataset
-
+        super(Dataset, self).__init__(examples, fields) # 生成标准dataset
+        
 def getDataIter(fin, fiveOrSeven, batch_size):
     data = Dataset(fin, TEXT)
     vectors = Vectors(wordvecPath)
-    TEXT.build_vocab(data, vectors=vectors, unk_init = torch.Tensor.normal_) #构建映射,设定最低词频为5
+    TEXT.build_vocab(data, vectors=vectors, unk_init = torch.Tensor.normal_) # 构建映射
     return BucketIterator(dataset=data, batch_size=batch_size, shuffle=True)
 
 def getTrainIter(fiveOrSeven, batch_size):
@@ -48,21 +49,10 @@ def getValidIter(fiveOrSeven, batch_size):
     validfin = codecs.open(path.join(dataPath, "qvalid"+str(fiveOrSeven)), 'r', encoding = 'utf-8')
     return getDataIter(validfin, fiveOrSeven, batch_size)
 
+# 获取一个batch的单字的onehot向量组成的矩阵
 def idx_to_onehot(w, vocab_size, batch_size):
-    res = torch.zeros((batch_size, vocab_size)).scatter(1, w, 1)
+    res = torch.zeros((batch_size, vocab_size)).cuda().scatter(1, w, 1)
     return torch.transpose(res,0,1)
-
-def char_to_onehot(c, vocab_size):
-    res = torch.zeros((vocab_size, 1))
-    res[TEXT.vocab.stoi[c]] = 1
-    return res
-
-def sentence_to_onehot(idx, vocab_size, batch_size):
-    res = torch.zeros((6*vocab_size, batch_size), dtype=torch.long)
-    for i in range(batch_size):
-        for j in range(6):
-            res[idx[j][i]+j*vocab_size][i] = 1
-    return res
 
 def itos(idx):
     result = torch.zeros((idx.size()), dtype=torch.long)
@@ -70,9 +60,11 @@ def itos(idx):
         result[a] = int(TEXT.vocab.itos[i])
     return result
 
+# 计算预测结果与真实结果相同字的个数
 def calSame(out, real):
     return int(torch.argmax(out,dim=1).eq(real).sum())
 
+# 梯度裁剪
 def clip_gradient(optimizer, grad_clip):
     """
     Clips gradients computed during backpropagation to avoid explosion of gradients.
@@ -85,6 +77,7 @@ def clip_gradient(optimizer, grad_clip):
             if param.grad is not None:
                 param.grad.data.clamp_(-grad_clip, grad_clip)
                 
+# 聚类函数 将文件中的字进行聚类存到字典中
 """ params: n if number of clusters, path is the path of train file
     return: res -> {character:(label, probability)}
     using KMeans cluster
@@ -120,11 +113,3 @@ def cluster(n, path):
         prob = wordscnt[c] / freq[label]
         res[c] = tuple((n-1, prob))
     return res
-
-'''
-    for i in range(100):
-        c = words[i]
-        label = res[c]
-        print("{} : {}".format(c, label))
-'''
-    

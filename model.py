@@ -31,7 +31,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 def tokenize(x): return x.split()  # 分词函数,后续操作中会用到
 
 wordvecPath = "word2vec.vector"
-dataPath = "/content/drive/My Drive/Colab Notebooks/dataset/"
+#dataPath = "/content/drive/My Drive/Colab Notebooks/dataset/"
+dataPath = "/dataset/"
 #wordVec = Word2Vec.load(wordvecPath)
 TEXT = data.Field(sequential=True, tokenize=tokenize)
 
@@ -48,7 +49,7 @@ class Dataset(data.Dataset):
 
 def getDataIter(fin, fiveOrSeven):
     data = Dataset(fin, TEXT)
-    vectors = Vectors(name='/content/drive/My Drive/Colab Notebooks/word2vec.vector')
+    vectors = Vectors(name='word2vec.vector')
     TEXT.build_vocab(data, vectors=vectors, unk_init = torch.Tensor.normal_, min_freq=5) #构建映射,设定最低词频为5
     return BucketIterator(dataset=data, batch_size=batch_size, shuffle=True)
 
@@ -337,4 +338,4 @@ training = True
 fit(10)
 
 #保存模型
-torch.save(model.state_dict(), '/content/drive/My Drive/Colab Notebooks/models/model.pth')
+#torch.save(model.state_dict(), '/content/drive/My Drive/Colab Notebooks/models/model.pth')
