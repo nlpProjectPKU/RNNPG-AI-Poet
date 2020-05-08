@@ -17,7 +17,7 @@ feature_size = 512 #网络中隐藏层维数
 embedding_dim = 256 #词向量维数
 #目标分类的数量
 #class_size = 84
-lr = 0.002 #学习率
+lr = 0.0001 #学习率
 decay_factor = 1.004 #学习率梯度衰减参数
 betas = (0.9, 0.999) #Adam参数
 train_iter = getTrainIter(text_len, batch_size) #获取训练集的迭代器
@@ -63,7 +63,7 @@ def fit(epoch):
             torch.cuda.empty_cache() #清除显存冗余
             loss = 0
             for j in range(2,5): #生成2-4句
-                for k in range(1,text_len):
+                for k in range(1,text_len+1):
                     if k == 1:
                         state = model.init_hidden(batch.text.size()[1]) #首字的隐藏层用0初始化
                     out, state = model(batch.text.cuda(), state, j, k) #forward
