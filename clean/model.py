@@ -134,9 +134,100 @@ class ModelOld(nn.Module):
         return loss
 
 #整合好的模型
-class Model(nn.Module):
+class Model5(nn.Module):
     def __init__(self, vocab_size, weight_matrix, pad_idx, embedding_dim=150, feature_size=200, text_len=7, dropout=0.2):
-        super(Model, self).__init__()
+        super(Model5, self).__init__()
+        self.feature_size = feature_size
+        self.vocab_size = vocab_size
+        self.text_len = text_len
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=pad_idx)
+        self.embedding.weight.data.copy_(weight_matrix)  #载入由预训练词向量生成的权重矩阵
+        self.relu = nn.LeakyReLU()  #ReLU函数
+        self.d = nn.Dropout(p=dropout)
+        #CSM所用的卷积层
+        self.conv1 = nn.Conv1d(in_channels=embedding_dim,
+                               out_channels=feature_size, kernel_size=2)
+        self.conv2 = nn.Conv1d(in_channels=feature_size,
+                               out_channels=feature_size, kernel_size=2)
+        self.conv3 = nn.Conv1d(in_channels=feature_size,
+                               out_channels=feature_size, kernel_size=3)
+        self.conv4 = nn.Conv1d(in_channels=feature_size,
+                               out_channels=feature_size, kernel_size=3)
+        self.M = nn.Linear(in_features=2*feature_size,
+                           out_features=feature_size)
+        #RCM
+        self.U1 = nn.Linear(in_features=feature_size, out_features=feature_size)
+        self.U2 = nn.Linear(in_features=feature_size, out_features=feature_size)
+        self.U3 = nn.Linear(in_features=feature_size, out_features=feature_size)
+        self.U4 = nn.Linear(in_features=feature_size, out_features=feature_size)
+        self.U5 = nn.Linear(in_features=feature_size, out_features=feature_size)
+        self.U6 = nn.Linear(in_features=feature_size, out_features=feature_size)
+        self.U7 = nn.Linear(in_features=feature_size, out_features=feature_size)
+        #RGM
+        self.R = nn.Linear(feature_size, feature_size)
+        self.H = nn.Linear(feature_size, feature_size)
+        self.X = nn.Linear(embedding_dim, feature_size)
+        self.Y = nn.Linear(feature_size, vocab_size)
+
+    def forward(self, text, state, ith_sentence, ith_character): #text 28*batch_size
+        #---------------------------------------------------------------------#
+        #词嵌入
+        embedded = self.embedding(text)
+        embedded = embedded.permute(1, 2, 0)
+        #---------------------------------------------------------------------#
+        #CSM部分
+        vecs = []
+        for j in range(1,ith_sentence): #生成v1-v_ith_sentence-1
+            out = self.conv1(embedded[:,:,(j-1)*self.text_len:j*self.text_len])
+            out = self.d(out)
+            out = self.relu(out)  # batch_size*feature_size*6
+            out = self.conv2(out)
+            out = self.d(out)
+            out = self.relu(out)  # batch_size*feature_size*5
+            out = self.conv3(out)
+            out = self.d(out)
+            out = self.relu(out)  # batch_size*feature_size*3
+            if self.text_len == 7:
+                out = self.conv4(out)
+                out = self.d(out)
+                out = self.relu(out)  # batch_size*feature_size*1
+            vecs.append(out.squeeze(2))
+        #---------------------------------------------------------------------#
+        #RCM部分
+        h = torch.zeros((vecs[0].size()[0], self.feature_size)).cuda()
+        for i in range(0, ith_sentence-1):
+            out = torch.cat((vecs[i], h), dim=1)
+            out = self.M(out)
+            h = self.relu(out)
+        if ith_character == 1:
+            rcmout = self.U1(h).cuda()
+        elif ith_character == 2:
+            rcmout = self.U2(h).cuda()
+        elif ith_character == 3:
+            rcmout = self.U3(h).cuda()
+        elif ith_character == 4:
+            rcmout = self.U4(h).cuda()
+        elif ith_character == 5:
+            rcmout = self.U5(h).cuda()
+        elif ith_character == 6:
+            rcmout = self.U6(h).cuda()
+        elif ith_character == 7:
+            rcmout = self.U7(h).cuda()
+        rcmout = self.relu(rcmout)
+        #---------------------------------------------------------------------#
+        #RGM部分
+        w = text[self.text_len*(ith_sentence-1)+ith_character-2]
+        middle = self.R(state)
+        w = self.embedding(w) #单字
+        state = self.relu(middle+self.X(w)+self.H(rcmout))
+        y = self.Y(state)
+        return y, state
+    def init_hidden(self, batch_size):
+        return Variable(torch.zeros(batch_size, self.feature_size)).cuda()
+    
+class Model7(nn.Module):
+    def __init__(self, vocab_size, weight_matrix, pad_idx, embedding_dim=150, feature_size=200, text_len=7, dropout=0.2):
+        super(Model7, self).__init__()
         self.feature_size = feature_size
         self.vocab_size = vocab_size
         self.text_len = text_len

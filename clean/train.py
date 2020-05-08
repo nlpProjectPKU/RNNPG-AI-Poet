@@ -5,7 +5,7 @@ from tqdm import tqdm  # 用于绘制进度条
 import torch.nn as nn  # 用于搭建模型
 import torch.optim as optim  # 用于生成优化函数
 from matplotlib import pyplot as plt #用于绘制误差函数
-from model import Model, ModelForClustering #导入网络类
+from model import Model5, Model7, ModelForClustering #导入网络类
 from util import TEXT, getTrainIter, getValidIter, calSame, clip_gradient, cluster #导入用到的函数
 
 torch.manual_seed(19260817)  # 设定随机数种子
@@ -17,7 +17,7 @@ feature_size = 512 #网络中隐藏层维数
 embedding_dim = 256 #词向量维数
 #目标分类的数量
 #class_size = 84
-lr = 0.0001 #学习率
+lr = 0.003 #学习率
 decay_factor = 1.004 #学习率梯度衰减参数
 betas = (0.9, 0.999) #Adam参数
 train_iter = getTrainIter(text_len, batch_size) #获取训练集的迭代器
@@ -25,7 +25,10 @@ weight_matrix = TEXT.vocab.vectors  # 构建权重矩阵
 loss_function = nn.functional.cross_entropy #使用交叉熵损失函数
 vocab_size = len(TEXT.vocab) #词典大小
 #模型
-model = Model(vocab_size=vocab_size, weight_matrix=weight_matrix, pad_idx=TEXT.vocab.stoi[TEXT.pad_token], embedding_dim=embedding_dim, feature_size=feature_size, text_len=text_len)
+if text_len == 5:
+    model = Model5(vocab_size=vocab_size, weight_matrix=weight_matrix, pad_idx=TEXT.vocab.stoi[TEXT.pad_token], embedding_dim=embedding_dim, feature_size=feature_size, text_len=text_len)
+elif text_len == 7:
+    model = Model7(vocab_size=vocab_size, weight_matrix=weight_matrix, pad_idx=TEXT.vocab.stoi[TEXT.pad_token], embedding_dim=embedding_dim, feature_size=feature_size, text_len=text_len)
 model.cuda() #使用gpu训练
 #将目标分类作为输出结果时的模型, 未能成功训练
 #model = ModelForClustering(vocab_size=vocab_size, class_size=class_size, weight_matrix=weight_matrix, pad_idx=TEXT.vocab.stoi[TEXT.pad_token], embedding_dim=embedding_dim, feature_size=feature_size, text_len=text_len)
