@@ -11,8 +11,8 @@ from sklearn.cluster import KMeans # 聚类函数
 def tokenize(x): return x.split()
 
 #在这里修改加载文件的位置
-wordvecPath = "word2vec.vector"
-dataPath = "dataset/"
+wordvecPath = "word2vec7.vector"
+dataPath = "../data/"
 TEXT = data.Field(sequential=True, tokenize=tokenize)
 wordVec = KeyedVectors.load_word2vec_format(wordvecPath, binary = False)
 vocab = wordVec.vocab
