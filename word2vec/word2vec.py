@@ -18,7 +18,7 @@ def cut(path):
         stopwords.append(temp1)
     #print(stopwords)
     fo = open('./cut.txt', 'w', encoding='utf-8')
-    #print(txtLists)
+    print(txtLists)
     for txt in txtLists:
         fi = open(path+txt, 'r', encoding='utf-8')
         
