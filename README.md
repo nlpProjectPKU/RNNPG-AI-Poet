@@ -1,2 +1,7 @@
-# models
-Deep learning models created for the project
+# RNNPG 古诗生成
+
+文件及使用方法:
+
+data中含有原论文提供的七言、五言绝句训练集
+
+dataset中含有生成诗歌时使用的《诗学含英》与《平水韵》
