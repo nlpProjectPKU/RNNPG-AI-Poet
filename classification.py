@@ -22,6 +22,9 @@ for line in shixuehanying:
     else:
         classes.append(None)
 
+""" @params keywords 是单词的可迭代对象
+      @return 返回最接近的两个类的编号
+"""
 def get_class(keywords):
     sim = [1]*len(classes)
     for word in keywords:
