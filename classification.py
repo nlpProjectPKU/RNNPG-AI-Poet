@@ -1,8 +1,8 @@
 import codecs
 from gensim.models import KeyedVectors
 
-wordvecPath = "D:\\pku\\2020春\\智能科学引论\\团队项目\\sgns.literature.word.bz2"
-sxhyPath = "D:\\pku\\2020春\\智能科学引论\\团队项目\\shixuehanying.txt"
+wordvecPath = "dataset\\sgns.literature.word.bz2"
+sxhyPath = "dataset\\shixuehanying.txt"
 
 wordVec = KeyedVectors.load_word2vec_format(wordvecPath,\
     binary = False, encoding = "utf-8", unicode_errors = "ignore")
