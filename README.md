@@ -20,11 +20,11 @@ By [ZincCat](https://github.com/orgs/nlpProjectPKU/people/zinccat), [cbxg0511](h
 
 运行Generator.py进行律诗的生成
 
-<img src="D:\Courses\NLP\TP\models\images\Poem.jpg" alt="image-20200512145410941" style="zoom: 67%;" />
+<img src=".\images\Poem.jpg" alt="image-20200512145410941" style="zoom: 67%;" />
 
 运行GeneratorFixHead.py进行藏头诗的生成
 
-<img src="D:\Courses\NLP\TP\models\images\FixHead.jpg" alt="image-20200512145321286" style="zoom:67%;" />
+<img src=".\images\FixHead.jpg" alt="image-20200512145321286" style="zoom:67%;" />
 
 文件及使用方法:
 
