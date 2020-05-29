@@ -17,4 +17,3 @@ if chars == 5:
     GeneratorFor5_FixedHead.print_topn()
 else:
     GeneratorFor7_FixedHead.print_topn()
-

@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
-
 # -*- coding: utf-8 -*-
 import torch  # 用于搭建及训练模型
 import torch.nn as nn  # 用于搭建模型
@@ -20,9 +17,6 @@ import operator
 import random
 import copy
 
-# In[2]:
-
-
 PATH = {
     "SHIXUEHANYING_PATH": "./dataset/shixuehanying.txt",
     "TOP_RESULT": "./shengcheng/top.txt",
@@ -31,10 +25,6 @@ PATH = {
     "VECTOR": "./model/word2vec7.vector",
     "DATA": "./data/",
 }
-
-
-# In[3]:
-
 
 def tokenize(x): return x.split()
 
@@ -67,10 +57,6 @@ def getTrainIter(fiveOrSeven):
     trainfin = codecs.open(path.join(PATH["DATA"], "qtrain" + str(fiveOrSeven)), 'r', encoding='utf-8')
     return getDataIter(trainfin, fiveOrSeven)
 
-
-# In[4]:
-
-
 orderDict = torch.load(PATH["MODEL"], map_location='cpu')
 feature_size = orderDict["conv1.weight"].size()[0]
 vocab_size = orderDict["embedding.weight"].size()[0]
@@ -78,9 +64,6 @@ embedding_dim = orderDict["embedding.weight"].size()[1]
 
 getTrainIter(text_len)
 weight_matrix = TEXT.vocab.vectors  # 构建权重矩阵
-
-# In[5]:
-
 
 FIVE_PINGZE = [[[0, -1, 1, 1, -1], [0, 1, -1, -1, 1], [0, 1, 1, -1, -1], [0, -1, -1, 1, 1]],
                [[0, -1, -1, 1, 1], [0, 1, -1, -1, 1], [0, 1, 1, -1, -1], [0, -1, -1, 1, 1]],
@@ -92,17 +75,9 @@ SEVEN_PINGZE = [[[0, 1, 0, -1, -1, 1, 1], [0, -1, 1, 1, -1, -1, 1], [0, -1, 0, 1
                 [[0, -1, 1, 1, -1, -1, 1], [0, 1, 0, -1, -1, 1, 1], [0, 1, 0, -1, 1, 1, -1], [0, -1, 1, 1, -1, -1, 1]],
                 [[0, -1, 0, 1, 1, -1, -1], [0, 0, -1, -1, -1, 1, 1], [0, 1, 0, -1, 1, 1, -1], [0, -1, 1, 1, -1, -1, 1]]]
 
-
-# In[6]:
-
-
 def idx_to_onehot(w, vocab_size, batch_size):
     res = torch.zeros((batch_size, vocab_size)).scatter_(1, w, 1)
     return torch.transpose(res, 0, 1)
-
-
-# In[7]:
-
 
 class Model(nn.Module):
     def __init__(self, vocab_size, weight_matrix, pad_idx, embedding_dim=150, feature_size=200, text_len=7,
@@ -202,10 +177,6 @@ class Model(nn.Module):
 model = Model(vocab_size=len(TEXT.vocab), weight_matrix=weight_matrix, pad_idx=TEXT.vocab.stoi[TEXT.pad_token],
               embedding_dim=embedding_dim, feature_size=feature_size, text_len=text_len)
 model.load_state_dict(orderDict)  # load model
-
-
-# In[8]:
-
 
 def read_shixuehanying():
     # get shixuehanying
@@ -340,10 +311,6 @@ def judge_tonal_pattern(row):
                 break
     return -1
 
-
-# In[12]:
-
-
 def judge_tonal(rows):
     # input a given poem and judge tonal pattern
     chars = len(rows[0])  # [["A","A",...],["B",...],...]
@@ -372,10 +339,6 @@ def sentence_to_onehot(idx, chars=7):
         for id2, ch in enumerate(sen):
             res[id1 * chars + id2] = TEXT.vocab.stoi[ch]
     return Variable(torch.LongTensor(res))
-
-
-# In[14]:
-
 
 def generate_fir_sentence(topn=10, expend=2):
     fir, chars, head = user_input()
@@ -412,7 +375,7 @@ def generate_fir_sentence(topn=10, expend=2):
                 while time < expend:
                     ch = id2char(get_top[pt][0])  # id to char
                     tmpflag = True
-                    for each in sen:  # avoid deplicate
+                    for each in sen:  # duplicate
                         if ch in each:
                             tmpflag = False
                             break
@@ -437,10 +400,6 @@ def generate_fir_sentence(topn=10, expend=2):
     score = score[0: min(topn, len(score))]
     candidate = [lines[0] for lines in score]
     return candidate
-
-
-# In[15]:
-
 
 def generate(topn=10, expend=2):
     candidate = generate_fir_sentence()  # [[["A"],["B"],["C"],["D"]]]
@@ -493,10 +452,6 @@ def generate(topn=10, expend=2):
         candidate = [lines[0] for lines in score]
     return candidate
 
-
-# In[16]:
-
-
 def print_topn(topn=10):
     candidate = generate(topn)
     for poem in candidate:
@@ -509,11 +464,3 @@ def print_topn(topn=10):
                 print(''.join(sen) + '，')
         print()
     return
-
-
-# In[ ]:
-
-
-# print_topn()
-
-# In[ ]:

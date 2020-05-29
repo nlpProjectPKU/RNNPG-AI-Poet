@@ -1,10 +1,30 @@
 # RNNPG 古诗生成
 
+By [ZincCat](https://github.com/orgs/nlpProjectPKU/people/zinccat), [cbxg0511](https://github.com/orgs/nlpProjectPKU/people/cbxg0511), [zch65458525](https://github.com/orgs/nlpProjectPKU/people/zch65458525), [kaname-madoka18](https://github.com/orgs/nlpProjectPKU/people/kaname-madoka18)
+
 本项目基于PyTorch构建了Chinese Poetry Generation with Recurrent Neural Networks (Zhang and Lapata, 2014) 中的**RNNPG**模型，实现了五言与七言绝句的生成。
 
 代码已在**Python 3.7.4**上测试通过，所使用到的库的具体版本参见requirements.txt
 
+**使用前请务必**
 
+**在[此处](https://disk.pku.edu.cn:443/link/40BDC6EC8D361843339EE97E23606AB9)下载关键词分类所使用的词向量(由[Chinese-Word-Vectors](https://github.com/Embedding/Chinese-Word-Vectors) 提供，位于文学作品-Word分类下)，放置到dataset目录中。**
+
+**在[此处](https://disk.pku.edu.cn:443/link/2021429465D38762F4920F8400AF1EE5)下载训练和预测所必须的训练集qtrain7和qtrain5文件，放置到data目录中。(注意：qtrain7与原文献提供的数据集略有差别，请勿直接使用原文献提供的qtrain7)**
+
+**在[此处](https://disk.pku.edu.cn:443/link/7052748FBF8A0B4F15DE2395098B3C4E)下载n-gram模型，放置到根目录中。**
+
+**在[此处](https://disk.pku.edu.cn:443/link/F5BA2C8C9969A4833024ACF92F156191)下载训练好的神经网络数据和训练所用的Word2Vec词向量，放置到model目录中。**
+
+**如需重新训练Word2Vec，请从[此处](https://disk.pku.edu.cn:443/link/61660ED530AEA01CF2143363C8C26FAA)下载poemlm文件夹并放置到word2vec目录中。**
+
+运行Generator.py进行律诗的生成
+
+<img src="D:\Courses\NLP\TP\models\images\Poem.jpg" alt="image-20200512145410941" style="zoom: 67%;" />
+
+运行GeneratorFixHead.py进行藏头诗的生成
+
+<img src="D:\Courses\NLP\TP\models\images\FixHead.jpg" alt="image-20200512145321286" style="zoom:67%;" />
 
 文件及使用方法:
 
@@ -12,7 +32,7 @@ data中含有原论文提供的七言、五言绝句训练集，注意qtrain7与
 
 dataset中含有生成诗歌时使用的《诗学含英》与《平水韵》
 
-model中含有训练(train.py)及生成(model.py)所使用的神经网络模型及训练函数，并提供了五言与七言诗已训练好的模型
+model中含有训练及生成所使用的神经网络模型(model.py)及训练函数(train.py)，并提供了五言与七言诗已训练好的模型(.pth)
 
 shengcheng为语言模型所使用的临时目录
 

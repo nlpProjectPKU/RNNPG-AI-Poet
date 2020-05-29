@@ -220,9 +220,12 @@ def read_character_tone():
     # get tonal dictionary of each character
     ping = []
     ze = []
-    with open(PATH["TONAL_PATH"], "r") as f:
+    pingshui = {}
+    j = -1
+    with open(PATH["TONAL_PATH"], "r", encoding='utf-8') as f:
         isPing = False
         for line in f.readlines():
+            j += 1
             line = line.strip()
             if line:
                 if line[0] == '/':
@@ -233,13 +236,17 @@ def read_character_tone():
                         ping.append(i)
                     else:
                         ze.append(i)
-    return {"Ping": ping, "Ze": ze}
+                    if i not in pingshui.keys():
+                        pingshui[i] = [j]
+                    else:
+                        pingshui[i].append(j)
+    return {"Ping": ping, "Ze": ze}, pingshui
 
 
 # In[9]:
 
 
-tonal_hash = read_character_tone()
+tonal_hash, pingshuiyun = read_character_tone()
 
 
 def judge_tonal_pattern(row):
@@ -302,6 +309,8 @@ def sentence_to_onehot(idx, chars):
 
 def generate(topn=10, expend=3):
     candidate = read_first_sen()  # first sentence
+    hidden_state = []
+
     print("producing...")
     chars = len(candidate[0][0])  # 5 or 7
     language_model = kenlm.Model("first.poem.lm")
@@ -310,17 +319,20 @@ def generate(topn=10, expend=3):
     for i in range(1, 4):  # for each line(2-4)
         for lines in candidate:  # [["A",...],[]]
             lines.append([])
+        hidden_state = []  # clear
+        for _ in range(topn):
+            hidden_state.append(torch.zeros((1, feature_size), requires_grad=True))
         for j in range(1, chars + 1):  # for each character(1-chars)
             tmp = candidate[:]
             candidate = []
-            for sen in tmp:  # [["A","A",...],["B",...],...]
-                state = torch.zeros((1, feature_size), requires_grad=True)
+            tmp_hidden = hidden_state[:]
+            hidden_state = []
+            for idx, sen in enumerate(tmp):  # [["A","A",...],["B",...],...]
+                state = tmp_hidden[idx]
                 input_var = sentence_to_onehot(sen, chars)  # 20 * 1
-                for k in range(1, j + 1):
-                    out, state = model(input_var, state, i + 1, k)  # predict
+                out, state = model(input_var, state, i + 1, j)  # predict
                 # state = torch.zeros((1, feature_size), requires_grad=True)
                 # out, state = model(input_var, state, i+1, j)
-
                 poss = out.data.reshape(-1).numpy().tolist()  # according to dl model
                 get_top = []
                 for _id, p in enumerate(poss):
@@ -338,10 +350,18 @@ def generate(topn=10, expend=3):
                     if not tmpflag:
                         pt += 1
                         continue
+                    if (len(sen) == 2 or len(sen) == 4) and len(sen[-1]) == 4:  # ping shui yun
+                        if ch not in pingshuiyun.keys():
+                            pt += 1
+                            continue
+                        if set(pingshuiyun[ch]).isdisjoint(set(pingshuiyun[sen[0][-1]])):
+                            pt += 1
+                            continue
                     sen[-1].append(ch)
                     if judge_tonal(sen):  # add into candidate
                         time += 1
                         candidate.append(copy.deepcopy(sen))
+                        hidden_state.append(state)
                     pt += 1
                     sen[-1].pop()
 
