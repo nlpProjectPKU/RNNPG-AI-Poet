@@ -18,7 +18,7 @@ By [ZincCat](https://github.com/orgs/nlpProjectPKU/people/zinccat), [cbxg0511](h
 
 **如需重新训练Word2Vec，请从[此处](https://disk.pku.edu.cn:443/link/61660ED530AEA01CF2143363C8C26FAA)下载poemlm文件夹并放置到word2vec目录中。**
 
-运行Generator.py进行律诗的生成
+运行Generator.py进行绝句的生成
 
 <img src=".\images\Poem.jpg" alt="image-20200512145410941" style="zoom: 67%;" />
 
@@ -37,3 +37,19 @@ model中含有训练及生成所使用的神经网络模型(model.py)及训练�
 shengcheng为语言模型所使用的临时目录
 
 word2vec中含有用于生成预训练词向量的word2vec.py, 并放入了原文献提供的语料库(poemlm),训练好的词向量已放置到model文件夹内供神经网络使用
+
+示例：
+千年纵横满尘埃，
+万里明花二月开。
+山色不如冰雪尽，
+更看今始见春来。
+
+月明风雨一声鸡，
+自是人心在石溪。
+莫道幽居无处住，
+湖光秋水浸平堤。
+
+笙歌到处游，
+风作天地秋。
+欲去无穷意，
+悠然不识愁。
